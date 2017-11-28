@@ -6,6 +6,9 @@
  *   Connects the Redux store to the Challenge Submissions display components.
  *   Passes the relevent state and setters as properties to the UI components.
  */
+import AccessDenied, {
+  CAUSE as ACCESS_DENIED_REASON,
+} from 'components/tc-communities/AccessDenied';
 import actions from 'actions/page/submission';
 import React from 'react';
 import PT from 'prop-types';
@@ -39,6 +42,11 @@ class SubmissionsPageContainer extends React.Component {
   }
 
   render() {
+    const { registrants, handle } = this.props;
+    const isRegistered = registrants.find(r => r.handle === handle);
+
+    if (!isRegistered) return <AccessDenied cause={ACCESS_DENIED_REASON.NOT_AUTHORIZED} />;
+
     return (
       <SubmissionsPage
         {...this.props}
@@ -72,7 +80,6 @@ SubmissionsPageContainer.propTypes = {
   currentPhases: PT.arrayOf(PT.object).isRequired,
   stockArtRecords: PT.arrayOf(PT.object).isRequired,
   setStockArtRecord: PT.func.isRequired,
-
   /* Older stuff */
   userId: PT.string.isRequired,
   challengesUrl: PT.string,
@@ -124,6 +131,8 @@ SubmissionsPageContainer.propTypes = {
   submissionFilestackData: filestackDataProp.isRequired,
   sourceFilestackData: filestackDataProp.isRequired,
   previewFilestackData: filestackDataProp.isRequired,
+  registrants: PT.arrayOf(PT.object).isRequired,
+  handle: PT.string.isRequired,
 };
 
 /**
@@ -136,10 +145,12 @@ SubmissionsPageContainer.propTypes = {
 const mapStateToProps = (state, ownProps) => {
   const detailsV2 = state.challenge.detailsV2;
   const submission = state.page.submission;
+
   return {
     currentPhases: state.challenge.details.currentPhases,
     stockArtRecords: submission.design.stockArtRecords,
-
+    registrants: state.challenge.detailsV2.registrants,
+    handle: state.auth.user.handle,
     /* Older stuff below. */
     userId: state.auth.user.userId,
     challengeId: detailsV2 && detailsV2.challengeId,
